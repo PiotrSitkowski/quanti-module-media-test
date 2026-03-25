@@ -1,0 +1,64 @@
+{
+  "version": "1.0.0",
+  "kernel-version": ">=0.4.0",
+  "last-verified": "2026-03-25",
+  "description": "Złote Ścieżki — In-Context Learning dla agentów AI. Każdy przykład zawiera pełny cykl TDD: RED → GREEN → Antywzorce.",
+  "examples": [
+    {
+      "id": "CS-01",
+      "primitive": "D1",
+      "file": "CS-01-D1-DatabaseAccess.md",
+      "title": "D1 — Relacyjna Baza Danych przez proxy Kernela",
+      "triggers": ["database", "sql", "query", "d1", "drizzle", "env.DB", "getTenantDb"]
+    },
+    {
+      "id": "CS-02",
+      "primitive": "R2",
+      "file": "CS-02-R2-ObjectStorage.md",
+      "title": "R2 — Object Storage przez Presigned URL",
+      "triggers": ["upload", "file", "r2", "storage", "presigned", "media", "attachment"]
+    },
+    {
+      "id": "CS-03",
+      "primitive": "Workflows",
+      "file": "CS-03-Workflows-DurableExecution.md",
+      "title": "Cloudflare Workflows — Trwałe Wykonanie (Saga)",
+      "triggers": ["workflow", "saga", "onboarding", "pipeline", "multi-step", "durable execution"]
+    },
+    {
+      "id": "CS-04",
+      "primitive": "DurableObjects",
+      "file": "CS-04-DurableObjects-RealtimeState.md",
+      "title": "Durable Objects — Stan Współdzielony i WebSocket",
+      "triggers": ["websocket", "realtime", "live", "durable object", "collaboration", "kanban"]
+    },
+    {
+      "id": "CS-05",
+      "primitive": "KV",
+      "file": "CS-05-KV-GlobalRead.md",
+      "title": "KV — Globalny Odczyt o Niskim Opóźnieniu",
+      "triggers": ["cache", "kv", "feature flags", "session", "low latency", "env.KV"]
+    },
+    {
+      "id": "CS-06",
+      "primitive": "Queues",
+      "file": "CS-06-Queues-CQRS.md",
+      "title": "Cloudflare Queues — Dual-Write (CQRS) i Reagowanie na Zdarzenia",
+      "triggers": ["queue", "event", "cqrs", "dual-write", "async", "contact.created"]
+    },
+    {
+      "id": "CS-07",
+      "primitive": "Vectorize",
+      "file": "CS-07-Vectorize-RAG.md",
+      "title": "Vectorize & AI — Wektoryzacja w Tle (RAG)",
+      "triggers": ["vector", "embedding", "rag", "ai", "semantic search", "vectorize", "bge"]
+    },
+    {
+      "id": "CS-08",
+      "primitive": "UIKit",
+      "file": "CS-08-UIKit-Slots.md",
+      "title": "Quanti UI Kit — Inteligentne Sloty i Dane z context",
+      "triggers": ["ui", "component", "slot", "mfe", "props.context", "shadcn", "button", "table"]
+    }
+  ]
+}

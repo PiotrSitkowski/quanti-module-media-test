@@ -1,0 +1,36 @@
+{
+  "protocolVersion": "3.5.1",
+  "generatedAt": "2026-03-25T18:11:29.502Z",
+  "permissions": {
+    ".agent/rules/*": "READ_ONLY",
+    ".agent/rules/CQRS_PATTERNS.md": "READ_ONLY",
+    ".agent/rules/DATA_ACCESS_PATTERNS.md": "READ_ONLY",
+    ".agent/rules/EDGE_CONSTRAINTS.md": "READ_ONLY",
+    ".agent/rules/MFE_PATTERNS.md": "READ_ONLY",
+    ".agent/rules/DDD_DOCS_FIRST.md": "READ_ONLY",
+    ".agent/MODULE_BRIEF.md": "READ_ONLY",
+    ".agent/PERMISSIONS.json": "READ_ONLY",
+    ".agent/FEEDBACK.md": "READ_ONLY",
+    ".agent/overrides/*": "READ_WRITE",
+    ".agent/capabilities/*": "READ_ONLY",
+    "vendor/*": "READ_ONLY",
+    "src/*": "READ_WRITE",
+    "schema.ts": "READ_WRITE",
+    "contract.ts": "READ_WRITE",
+    "definition.ts": "READ_WRITE",
+    "migrations/*": "READ_WRITE",
+    "CLAUDE.md": "READ_ONLY"
+  },
+  "overridePolicy": {
+    "maxOverrides": 5,
+    "requireJustification": true,
+    "autoRejectPatterns": [
+      "allow JOIN",
+      "allow env.DB",
+      "skip validation",
+      "disable Fleet Guard",
+      "allow node:",
+      "bypass cold validation"
+    ]
+  }
+}

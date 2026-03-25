@@ -1,0 +1,27 @@
+# =============================================================================
+# MediaTestModule — Wrangler Config (Fleet Worker)
+# =============================================================================
+# WorkerEntrypoint: list / getById / create / update / delete
+# Service type: content
+# DB access: via BACKEND.sys_executeDbQuery() — no direct D1 bindings needed
+# CQRS:      Queue events emitted on create/update/delete → processed by src/workers.ts
+
+name = "quanti-module-media-test"
+main = "src/worker.ts"
+compatibility_date = "2024-09-23"
+
+# Backend RPC — used by sys_executeDbQuery() proxy for D1 shard access
+[[services]]
+binding = "BACKEND"
+service = "quanti-backend"
+
+# Queue for CQRS async events (mandatory for DB modules — v4.0)
+[[queues.producers]]
+binding = "QUEUE_MAIN"
+queue = "quanti-main-queue"
+
+# Queue consumer binding (src/workers.ts)
+[[queues.consumers]]
+queue = "quanti-main-queue"
+max_batch_size = 10
+max_batch_timeout = 5
