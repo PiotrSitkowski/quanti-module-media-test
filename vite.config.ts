@@ -10,6 +10,13 @@
 
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { fileURLToPath } from 'url';
+
+// Derive project root without node:path — use import.meta.url + fileURLToPath
+// fileURLToPath is a Web API equivalent available in Vite config context
+const __filename = fileURLToPath(import.meta.url);
+// Strip the filename to get the directory (manual dirname — no node:path)
+const projectRoot = __filename.slice(0, __filename.lastIndexOf('/'));
 
 /**
  * sharedReactPlugin — externalises React so the host shell provides it.
@@ -25,7 +32,6 @@ function sharedReactPlugin() {
             return null;
         },
         renderChunk(code: string) {
-            // Rewrite bare imports to globalThis references for the host Import Map
             return code
                 .replace(/from\s*['"]react['"]/g, "from 'react'")
                 .replace(/from\s*['"]react-dom['"]/g, "from 'react-dom'");
@@ -35,6 +41,25 @@ function sharedReactPlugin() {
 
 export default defineConfig({
     plugins: [sharedReactPlugin(), react()],
+    resolve: {
+        // Map explicit .js specifiers → .ts source files for Vitest.
+        // worker.test.ts uses dynamic import('../../definition.js') — these aliases
+        // redirect to the real .ts files in the project root.
+        alias: [
+            {
+                find: /^(.*)\/definition\.js$/,
+                replacement: projectRoot + '/definition.ts',
+            },
+            {
+                find: /^(.*)\/contract\.js$/,
+                replacement: projectRoot + '/contract.ts',
+            },
+            {
+                find: /^(.*)\/schema\.js$/,
+                replacement: projectRoot + '/schema.ts',
+            },
+        ],
+    },
     server: {
         proxy: {
             '/api': {
@@ -53,8 +78,12 @@ export default defineConfig({
             external: ['react', 'react-dom', 'react/jsx-runtime', '@quanti/ui-kit'],
         },
         outDir:        'dist',
-        emptyOutDir:   false,    // don't wipe worker.js
+        emptyOutDir:   false,
         sourcemap:     true,
         minify:        true,
+    },
+    test: {
+        environment: 'node',
+        globals:     false,
     },
 });

@@ -15,158 +15,167 @@ import { z } from 'zod';
 
 export const media_testDefinition = {
     id:            'media-test',
-    name:          'Media Test',
+    name:          'Media Library',
     serviceType:   'content',
-    schemaVersion: 1,
-    version:       '1.0.0',
-    icon:          'Box',
+    schemaVersion: 2,
+    version:       '1.1.0',
+    icon:          'Image',
 
-    description: `Moduł testowy do zarządzania biblioteką zdjęć w storage object R2
-
-        Domain: generic. This module manages media-test records for the Quanti platform.
-        Use it to: list, create, update and delete media_test entries scoped by project and instance.`,
+    description: `Moduł biblioteki mediów umożliwiający zarządzanie zdjęciami i plikami
+        przechowywanymi w Cloudflare R2 Object Storage. Obsługuje upload plików
+        przez presigned URL (przepływ CS-02: przeglądarka wysyła bezpośrednio na R2),
+        przeglądanie galerii z podglądem miniatur, edycję metadanych (alt text) oraz
+        miękkie usuwanie plików z synchronizacją zdarzeń przez Cloudflare Queue.
+        Domain: content. Use it to: upload images, browse media gallery, manage metadata
+        for media files scoped by project and instance.`,
 
     slots:         ['media_test_main_view', 'media_test_detail_panel', 'dashboard_widget'],
     permissions:   [],
     behaviorRules: [
-        // TODO: Add JSON Logic rules here — no hardcoded if/else in service.ts
+        // Soft-delete only — R2 cleanup happens asynchronously via Queue consumer
+        { 'if': [{ '==': [{ 'var': 'action' }, 'delete'] }, 'soft-delete', 'proceed'] },
     ],
 
     mcpTools: {
         create_media_test: {
             name:        'create_media_test',
-            description: 'TODO: Describe when the AI should use this tool to create a media-test record.',
-            tags:        ['Media Test'],
-            // MCP-native annotations (spec 2024-11-05)
+            description: 'Registers a new media file entry in the database after a successful R2 presigned URL upload. Call this tool when the user uploads an image or file to their project media library and the binary upload to R2 is already complete.',
+            tags:        ['Media Test', 'Upload', 'R2'],
             annotations: {
-                title:           'Create Media Test',
+                title:           'Register Uploaded Media',
                 readOnlyHint:    false,
                 destructiveHint: false,
                 idempotentHint:  false,
                 openWorldHint:   false,
             },
-            // Context required by the MCP Gateway dispatcher
             requiredContext: ['projectId', 'instanceKey'],
-            // Queue events emitted after this tool call (for AI orchestration awareness)
-            emitsEvents: ['media_test.created'],
+            emitsEvents:     ['media_test.created'],
         },
         list_media_test: {
             name:        'list_media_test',
-            description: 'TODO: Describe when the AI should use this tool to list media-test records.',
-            tags:        ['Media Test'],
+            description: 'Lists all active media files in the project media library. Use this tool when the user wants to browse their uploaded images, find a specific file by name or type, or get an overview of the media library contents for a given project.',
+            tags:        ['Media Test', 'Gallery'],
             annotations: {
-                title:           'List Media Test',
-                readOnlyHint:    true,  // Does not modify data
+                title:           'List Media Files',
+                readOnlyHint:    true,
                 destructiveHint: false,
                 idempotentHint:  true,
                 openWorldHint:   false,
             },
             requiredContext: ['projectId', 'instanceKey'],
-            emitsEvents: [],
+            emitsEvents:     [],
         },
         update_media_test: {
             name:        'update_media_test',
-            description: 'TODO: Describe when the AI should use this tool to update a media-test record.',
-            tags:        ['Media Test'],
+            description: 'Updates editable metadata of an existing media file, such as the alt text for accessibility or the lifecycle status. Use this tool when the user wants to improve image descriptions or archive a media file without permanently deleting it.',
+            tags:        ['Media Test', 'Metadata'],
             annotations: {
-                title:           'Update Media Test',
+                title:           'Update Media Metadata',
                 readOnlyHint:    false,
                 destructiveHint: false,
                 idempotentHint:  true,
                 openWorldHint:   false,
             },
             requiredContext: ['projectId', 'instanceKey'],
-            emitsEvents: ['media_test.updated'],
+            emitsEvents:     ['media_test.updated'],
         },
         delete_media_test: {
             name:        'delete_media_test',
-            description: 'TODO: Describe when the AI should use this tool to delete a media-test record.',
-            tags:        ['Media Test'],
+            description: 'Soft-deletes a media file by setting its status to DELETED. The R2 object is cleaned up asynchronously by the Queue consumer. Use this tool when the user explicitly wants to remove a file from their media library permanently.',
+            tags:        ['Media Test', 'Delete'],
             annotations: {
-                title:           'Delete Media Test',
+                title:           'Delete Media File',
                 readOnlyHint:    false,
-                destructiveHint: true,  // Permanently removes data
+                destructiveHint: true,
                 idempotentHint:  true,
                 openWorldHint:   false,
             },
             requiredContext: ['projectId', 'instanceKey'],
-            emitsEvents: ['media_test.deleted'],
+            emitsEvents:     ['media_test.deleted'],
         },
     },
 
     dataSemantics: {
-        // TODO: Describe your data fields for AI understanding, e.g.:
-        // status: {
-        //     semanticType: 'status',
-        //     impact:       'neutral',
-        //     description:  'Lifecycle state of the record',
-        // },
         createdAt: {
             semanticType: 'temporal',
             impact:       'neutral',
             unit:         'timestamp',
-            description:  'Creation date of the record.',
+            description:  'ISO 8601 timestamp when the media file was uploaded and registered.',
+        },
+        size: {
+            semanticType: 'quantity',
+            impact:       'neutral',
+            unit:         'bytes',
+            description:  'File size in bytes. Used for storage quota calculations.',
+        },
+        status: {
+            semanticType: 'lifecycle',
+            impact:       'neutral',
+            description:  'Lifecycle state of the media file: ACTIVE (visible), PENDING (processing), DELETED (soft-deleted).',
         },
     },
 
-    // ─── Semantic Fabric (Vision 2027 — Punkt 2) ──────────────────────────────
-    // Describes which business processes this module participates in and how it
-    // relates to other modules. Used by the Process Vectorizer to build a semantic
-    // process graph indexed in Cloudflare Vectorize.
-
+    // ─── Semantic Fabric ──────────────────────────────────────────────────────
     columnSemantics: {
-        // TODO: Add AI-readable semantics for key columns, e.g.:
-        // totalAmount: {
-        //     semanticType: 'monetary',
-        //     unit:         'minor_unit',     // ISO 4217 minor unit (grosz, cent)
-        //     currency:     { from: 'metadata.currency', default: 'PLN' },
-        //     aggregatable: true,
-        //     displayFormat: '{value/100} {currency}',
-        //     aiHint: 'Always divide by 100 for display.',
-        // },
-        // status: {
-        //     semanticType: 'lifecycle',
-        //     values:      ['DRAFT', 'ACTIVE', 'ARCHIVED'],
-        //     transitions: 'DRAFT→ACTIVE→ARCHIVED',
-        //     aiHint:      'Status follows a strict lifecycle. Never skip states.',
-        // },
-        // dueDate: {
-        //     semanticType: 'deadline',
-        //     timezone:     'project',
-        //     businessRule: 'Approaching deadlines should trigger notifications.',
-        //     aiHint:       'Critical date field. Check against current time.',
-        // },
+        filename: {
+            semanticType: 'label',
+            aiHint:       'Original filename as provided by the user browser during upload.',
+        },
+        contentType: {
+            semanticType: 'category',
+            values:       ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'],
+            aiHint:       'MIME type of the stored file. Filter by this field to find images only.',
+        },
+        size: {
+            semanticType: 'quantity',
+            unit:         'bytes',
+            aggregatable: true,
+            aiHint:       'File size in bytes. Sum for quota, divide by 1048576 for MB display.',
+        },
+        r2Key: {
+            semanticType: 'reference',
+            aiHint:       'R2 object key in the format proj_{id}/{year}/{month}/{uuid}.{ext}. Never expose directly to users.',
+        },
+        alt: {
+            semanticType: 'label',
+            aiHint:       'Accessibility alt text. Suggest AI-generated description if empty.',
+        },
+        status: {
+            semanticType: 'lifecycle',
+            values:       ['PENDING', 'ACTIVE', 'DELETED'],
+            transitions:  'PENDING→ACTIVE, ACTIVE→DELETED',
+            aiHint:       'Only ACTIVE files are visible in gallery. DELETED files are cleaned up from R2 asynchronously.',
+        },
     },
 
     processGraph: {
-        // Processes this module participates in.
-        // The Process Vectorizer indexes each entry as a vector node.
         participatesIn: [
-            // {
-            //     processId:   'invoice-lifecycle',
-            //     role:        'creator',           // creator | transformer | distributor | monitor | data-source
-            //     description: 'Creates the media-test document and emits media_test.created event.',
-            //     step:        1,
-            //     totalSteps:  3,
-            // },
+            {
+                processId:   'media-lifecycle',
+                role:        'creator',
+                description: 'Creates and manages media file entries after R2 upload, emitting media_test.created event to trigger downstream processing.',
+                step:        1,
+                totalSteps:  3,
+            },
+            {
+                processId:   'r2-cleanup',
+                role:        'data-source',
+                description: 'Provides soft-deleted media records for the R2 cleanup Queue consumer to remove orphaned objects from storage.',
+                step:        2,
+                totalSteps:  2,
+            },
         ],
 
-        // Event-driven automations (JsonLogic conditions — no hardcoded if/else).
         automations: [
-            // {
-            //     name:      'example-automation',
-            //     trigger:   { event: 'media_test.created' },
-            //     condition: { '==': [{ 'var': 'data.status' }, 'confirmed'] },
-            //     action:    { module: 'target-module', method: 'handle', mapping: {} },
-            // },
+            {
+                name:      'soft-delete-r2-cleanup',
+                trigger:   { event: 'media_test.deleted' },
+                condition: { '==': [{ 'var': 'data.status' }, 'DELETED'] },
+                action:    { module: 'media-test', method: 'triggerR2Cleanup', mapping: { id: 'data.id', r2Key: 'data.r2Key' } },
+            },
         ],
 
-        // Semantic relations to other Fleet modules.
-        relations: [
-            // { target: 'categories', relation: 'uses',     instanceKey: 'media_test-types', description: 'Category classification' },
-            // { target: 'contacts',   relation: 'reads',    description: 'Owner / contact data' },
-            // { target: 'email-sender', relation: 'triggers', event: 'media_test.created', description: 'Notify on creation' },
-        ],
+        relations: [],
     },
 
     uiExtensions: [
@@ -174,28 +183,19 @@ export const media_testDefinition = {
             slot:      'media_test_main_view',
             component: 'MediaTestTable',
             priority:  10,
-            // MANDATORY (quanti analyze — documentation-debt rule):
-            // Describe the business logic of this component in ≥10 words.
-            // Placeholder "TODO" values will block quanti analyze and quanti deploy.
-            description: 'TODO: Describe what MediaTestTable displays, when it is shown, and what user actions it enables.',
+            description: 'Main media gallery view displaying all uploaded images for a project as a responsive grid with thumbnail previews. Enables users to upload new images via presigned R2 URL, browse existing media, and trigger file deletion with confirmation modal.',
         },
         {
             slot:      'media_test_detail_panel',
             component: 'MediaTestDetailPanel',
             priority:  10,
-            // MANDATORY (quanti analyze — documentation-debt rule):
-            // Describe the business logic of this component in ≥10 words.
-            // Placeholder "TODO" values will block quanti analyze and quanti deploy.
-            description: 'TODO: Describe what MediaTestDetailPanel displays, when it is shown, and what user actions it enables.',
+            description: 'Side panel showing full metadata of the currently selected media file including filename, size, MIME type, upload date and editable alt text. Provides save and soft-delete actions. Panel is empty when no file is selected in the gallery.',
         },
         {
             slot:      'dashboard_widget',
             component: 'MediaTestDashboardWidget',
             priority:  10,
-            // MANDATORY (quanti analyze — documentation-debt rule):
-            // Describe the business logic of this component in ≥10 words.
-            // Placeholder "TODO" values will block quanti analyze and quanti deploy.
-            description: 'TODO: Describe what MediaTestDashboardWidget displays, when it is shown, and what user actions it enables.',
+            description: 'Dashboard tile for the media library module showing total file count and number of files uploaded in the last seven days. Uses pre-loaded Kernel snapshot data — no additional RPC calls on mount. Clicking the action button navigates to the full gallery view.',
         },
     ],
 } as const;
@@ -203,22 +203,21 @@ export const media_testDefinition = {
 export type MediaTestModuleDefinition = typeof media_testDefinition;
 
 // ─── Module Configuration Schema ──────────────────────────────────────────────
-// Defines the structure of settings editable by the tenant admin.
-// Platform Admin UI auto-generates a form from this schema.
-// Keys MUST match configUi below (enforced by `quanti validate`).
 export const configSchema = z.object({
-    // TODO: Add module configuration fields, e.g.:
-    // theme:        z.enum(['light', 'dark']).default('light'),
-    // itemsPerPage: z.number().min(5).max(100).default(25),
-    // enableExport: z.boolean().default(false),
+    // Maximum file size in MB allowed for upload
+    maxFileSizeMb:    z.number().min(1).max(100).default(10),
+    // Allowed MIME types (comma-separated)
+    allowedMimeTypes: z.string().default('image/jpeg,image/png,image/webp,image/gif'),
+    // Gallery items per page
+    itemsPerPage:     z.number().min(10).max(200).default(50),
+    // Enable alt text AI suggestions (requires AI capability)
+    enableAiAlt:      z.boolean().default(false),
 });
 
 // ─── Configuration UI Hints ───────────────────────────────────────────────────
-// Controls labels, widget types, and conditional visibility (showIf via json_logic).
-// Keys MUST match configSchema fields above.
 export const configUi: Record<string, { label: string; widget: string; showIf?: unknown }> = {
-    // TODO: Add UI hints for each configSchema field, e.g.:
-    // theme:        { label: 'Color Theme', widget: 'select' },
-    // itemsPerPage: { label: 'Items per page', widget: 'slider' },
-    // enableExport: { label: 'Enable CSV Export', widget: 'toggle' },
+    maxFileSizeMb:    { label: 'Max file size (MB)',      widget: 'slider' },
+    allowedMimeTypes: { label: 'Allowed MIME types',      widget: 'text' },
+    itemsPerPage:     { label: 'Gallery items per page',  widget: 'slider' },
+    enableAiAlt:      { label: 'AI alt text suggestions', widget: 'toggle' },
 };

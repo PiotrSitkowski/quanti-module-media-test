@@ -5,55 +5,79 @@
 
 ## Overview
 
-Moduł testowy do zarządzania biblioteką zdjęć w storage object R2
+Moduł biblioteki mediów umożliwiający zarządzanie zdjęciami i plikami przechowywanymi
+w Cloudflare R2 Object Storage. Obsługuje upload plików przez presigned URL (pattern CS-02),
+przeglądanie galerii z podglądem miniatur, edycję metadanych (alt text) oraz miękkie
+usuwanie z asynchronicznym czyszczeniem R2 przez Queue consumer.
 
 ## File Map
 
 | Plik | Logika Biznesowa |
 |------|-----------------|
-| src/worker.ts | Main WorkerEntrypoint — handles RPC methods for Media Test |
-| schema.ts | Drizzle ORM schema for media_test table |
-| contract.ts | RPC contract — input/output Zod schemas |
-| definition.ts | Module definition — id, serviceType, uiExtensions |
-| src/hooks/useModuleTranslation.ts | i18n hook — returns translations for current language |
-| src/locales/en.ts | English translations (source of truth) |
-| src/locales/pl.ts | Polish translations (must mirror en.ts keys) |
-| src/locales/index.ts | Lazy-loaded locale barrel export |
-| src/components/MediaTestTable.tsx | UI component for media_test_main_view slot |
-| src/components/MediaTestDetailPanel.tsx | UI component for media_test_detail_panel slot |
-| src/components/MediaTestDashboardWidget.tsx | UI component for dashboard_widget slot |
-| src/components/index.ts | Barrel export for all UI components |
-| src/index.ts | MFE entry barrel — exports components for R2 bundle |
-| src/workers.ts | CQRS Queue Consumer — processes async events |
+| src/worker.ts | WorkerEntrypoint — RPC CRUD dla mediów: list (filtruje DELETED), create (rejestruje metadata po R2 upload), update (alt/status), delete (soft-delete → status DELETED) |
+| src/workers.ts | CQRS Queue Consumer — przetwarza zdarzenia media_test.created/.updated/.deleted, trigger czyszczenia R2 po soft-delete |
+| src/lib/r2Upload.ts | CS-02 helper — uploadToR2() wysyła plik binarny bezpośrednio na R2 przez presigned PUT URL; jedyne miejsce gdzie fetch() nie idzie do backendu Fleet |
+| src/components/MediaTestTable.tsx | Slot media_test_main_view — galeria z grid miniatur obrazów, upload przez CS-02 presigned URL z bezpośrednim PUT na R2, akcja delete z potwierdzeniem przez dispatchQuantiEvent |
+| src/components/MediaTestDetailPanel.tsx | Slot media_test_detail_panel — podgląd wybranego pliku z metadanymi (filename, size, type, status), edycja alt text przez RPC update, soft-delete przez dispatchQuantiEvent confirm modal |
+| src/components/MediaTestDashboardWidget.tsx | Slot dashboard_widget — kafelek z metrykami biblioteki mediów (totalFiles, recentFiles) ładowanymi z context.data (Kernel snapshot — zero fetch przy mount) |
+| src/components/index.ts | Barrel export komponentów MFE: MediaTestTable, MediaTestDetailPanel, MediaTestDashboardWidget |
+| src/hooks/useModuleTranslation.ts | Hook i18n — zwraca obiekt translations dla lang (en/pl) z context.lang, default en |
+| src/locales/en.ts | Tłumaczenia angielskie (source of truth) — klucze galerii: uploadBtn, uploadSuccess, deleteConfirm, detailTitle, widgetTitle, projectLabel |
+| src/locales/pl.ts | Tłumaczenia polskie — muszą mieć dokładnie te same klucze co en.ts, zweryfikowane przez quanti validate i18n-sync-check |
+| src/locales/index.ts | Barrel export locali — lazy-loaded locale exports dla en i pl |
+| src/index.ts | MFE entry barrel — re-eksportuje wszystkie komponenty dla bundlu MFE (React external) |
+| schema.ts | Drizzle ORM schema definitywna dla tabeli media_test: mandatory cols (id, project_id, instance_key, metadata) + media cols (filename, content_type, size, r2_key, alt, status) |
+| contract.ts | Zod schemas dla payloadów RPC — ListPayload (filtry: status, contentType, limit), CreatePayload (wymaga: filename, contentType, size, r2Key), UpdatePayload (alt, status), DeletePayload |
+| definition.ts | Manifest modułu Quanti: id=media-test, schemaVersion=2, slots x3, mcpTools x4, dataSemantics, columnSemantics, processGraph.participatesIn, configSchema |
 
 ## Rules & Constraints
 
-- TODO: List validation rules, invariants, and business constraints
+- **Brak env.R2 binding** — Fleet modules nie mają bezpośredniego bindingu R2. Presigned URL pochodzi z Kernel media service przez context.api.rpc.
+- **Soft-delete only** — usunięcie ustawia status = DELETED; plik R2 jest czyszczony asynchronicznie przez Queue consumer w src/workers.ts.
+- **Tylko obrazy** — accept="image/*" w file input; content_type walidowany przez Zod.
+- **Tenant isolation** — każde zapytanie filtruje po project_id AND instance_key.
+- **Brak JOINów** — odczyt flat SELECT, metadane w JSON blob.
+
+## Upload Flow (CS-02)
+
+Przepływ 3-krokowy dla uploadu pliku:
+1. Component wywołuje context.api.rpc('media', 'getPresignedUploadUrl') → Kernel media service zwraca uploadUrl + fileKey
+2. Przeglądarka wysyła plik fetch(uploadUrl, PUT, body: file) bezpośrednio na R2 (omija Worker — zero kosztów egress)
+3. Component wywołuje context.api.rpc('media-test', 'create', { r2Key, filename, ... }) → nasz Worker zapisuje metadata do D1
 
 ## Orchestration Guide
 
 **Triggered by:**
-- RPC call `media-test.list` / `media-test.getById` / `media-test.create` / `media-test.update` / `media-test.delete`
-- TODO: Add any Queue events that trigger this module
+- RPC media-test.list — przeglądanie galerii (filtr: status != DELETED)
+- RPC media-test.getById — podgląd szczegółów w panelu bocznym
+- RPC media-test.create — rejestracja metadata po udanym upload do R2
+- RPC media-test.update — edycja alt text lub zmiany statusu
+- RPC media-test.delete — soft-delete (status → DELETED)
 
 **Emits:**
-- TODO: List Queue events emitted by this module (e.g. `media-test.created`, `media-test.deleted`)
+- media_test.created — po create(), dane: { id, filename, contentType, size, r2Key }
+- media_test.updated — po update(), dane: { id }
+- media_test.deleted — po delete(), dane: { id } — konsumowany przez workers.ts dla R2 cleanup
 
 **Composes with:**
-- TODO: List modules that consume or produce events for this module
+- Kernel media service — dostarcza presigned URL dla R2 uploads
+- QUEUE_MAIN — asynchroniczne czyszczenie R2 po soft-delete
 
 ## Data Lineage
 
-Skąd pochodzą dane i jak są modyfikowane. Czytaj przed bezpośrednią modyfikacją kolumn.
-
 | Kolumna | Źródło | Aktualizacja |
 |---------|--------|--------------|
-| id | `crypto.randomUUID()` przy tworzeniu | Nigdy — immutable |
-| project_id | Kontekst sesji (tenant isolation) | Nigdy — immutable |
-| instance_key | Parametr wywołania RPC | Nigdy — immutable |
-| metadata | JSON blob — dane pomocnicze | Przez `update()` RPC |
-| created_at | `unixepoch()` przy INSERT | Nigdy — immutable |
-| updated_at | `unixepoch()` przy INSERT i UPDATE | Automatycznie przez `update()` |
-| TODO: dodaj kolumny modułu | TODO: opisz źródło | TODO: opisz kiedy się zmienia |
+| id | crypto.randomUUID() w create() | Nigdy — immutable |
+| project_id | Z payload RPC (tenant isolation) | Nigdy — immutable |
+| instance_key | Z payload RPC | Nigdy — immutable |
+| filename | Original filename z File.name w przeglądarce | Nigdy — immutable |
+| content_type | File.type z przeglądarki | Nigdy — immutable |
+| size | File.size z przeglądarki (bytes) | Nigdy — immutable |
+| r2_key | fileKey zwrócony przez Kernel media service | Nigdy — immutable |
+| alt | Opcjonalny tekst alternatywny | Przez update() RPC |
+| status | ACTIVE przy INSERT | DELETED przez delete() RPC |
+| metadata | JSON blob — dane pomocnicze | Przez update() RPC |
+| created_at | unixepoch() przy INSERT | Nigdy — immutable |
+| updated_at | unixepoch() przy INSERT | Automatycznie przez update() i delete() |
 
 > **Reguła:** Nigdy nie modyfikuj kolumn obliczanych bezpośrednio — używaj odpowiedniej metody RPC.

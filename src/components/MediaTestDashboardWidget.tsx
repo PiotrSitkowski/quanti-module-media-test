@@ -1,8 +1,12 @@
 /**
  * MediaTestDashboardWidget — Slot: dashboard_widget
  *
+ * Dashboard widget showing media library statistics:
+ * total files uploaded and count of recent uploads (last 7 days).
+ *
  * MFE component injected via ExtensionSlot.
  * Context comes from props — never import stores directly.
+ * Data is pre-loaded in context.data by the Kernel snapshot before mount.
  *
  * Design System rules (UX_UI_STANDARDS.md):
  *   - Base font: text-[13px]
@@ -12,32 +16,30 @@
  *
  * i18n (LOCALIZATION_STANDARDS.md):
  *   - NEVER hardcode user-visible strings — use `t.key` from useModuleTranslation
- *
- * Modals (CORE_UI_MODULES.md):
- *   - NEVER use native browser dialogs — use context.api?.dispatchQuantiEvent('quanti:modal:show', ...) instead
- *   - dispatchQuantiEvent is provided by the host shell via props.context.api (never import from @quanti/kernel)
  */
 
 import React, { Suspense } from 'react';
 import { useModuleTranslation } from '../hooks/useModuleTranslation.js';
 
-// dispatchQuantiEvent is provided by the host shell via props.context.api.
-// Do NOT import from @quanti/kernel — that package is not bundled with the module.
-
 interface MediaTestDashboardWidgetProps {
     context: {
-        projectId: number;
+        projectId:    number;
         instanceKey?: string;
-        lang?: string;
+        lang?:        string;
         api?: {
             dispatchQuantiEvent?: (event: string, payload: unknown) => void;
+            [key: string]: unknown;
+        };
+        data?: {
+            totalFiles?:  number;
+            recentFiles?: number;
             [key: string]: unknown;
         };
         [key: string]: unknown;
     };
 }
 
-// ── Inline ErrorBoundary (replace with shared @quanti/ui-kit version if available) ──
+// ── Inline ErrorBoundary ──────────────────────────────────────────────────────
 class ErrorBoundary extends React.Component<
     { children: React.ReactNode; fallback?: React.ReactNode },
     { hasError: boolean }
@@ -57,35 +59,66 @@ class ErrorBoundary extends React.Component<
     }
 }
 
-// ── Inner component — implement business logic here ──────────────────────────
-
+// ── Inner component ───────────────────────────────────────────────────────────
 function MediaTestDashboardWidgetInner({ context }: MediaTestDashboardWidgetProps) {
-    const t = useModuleTranslation(context.lang as 'en' | 'pl');
+    const t           = useModuleTranslation(context.lang as 'en' | 'pl');
+    // Data is pre-populated by Kernel snapshot — no fetch on mount
+    const totalFiles  = context.data?.totalFiles  ?? 0;
+    const recentFiles = context.data?.recentFiles ?? 0;
 
-    // ✅ Correct pattern: communicate via context.api — NEVER call fetch directly
-    function handleAction() {
-        context.api?.dispatchQuantiEvent?.('quanti:modal:show', {
-            type:      'info',
-            title:     t.title,
+    // Navigate to full media library view
+    function handleOpenLibrary() {
+        context.api?.dispatchQuantiEvent?.('quanti:navigate', {
+            module:    'media-test',
+            slot:      'media_test_main_view',
             projectId: context.projectId,
-            message:   'Implement MediaTestDashboardWidget business logic here.',
         });
     }
 
     return (
         <div className="flex flex-col gap-3">
+            {/* ── Header ── */}
             <h4 className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                {t.title}
+                {t.widgetTitle}
             </h4>
 
+            {/* ── Project indicator (required by tests) ── */}
             <p className="text-[13px] text-gray-500 dark:text-gray-400">
-                Implement MediaTestDashboardWidget business logic here.
+                {t.projectLabel} {context.projectId}
             </p>
 
-            {/* Example: correct event-driven action via context.api */}
+            {/* ── Metrics ── */}
+            <div className="flex gap-4">
+                <div
+                    data-testid="metric-total"
+                    className="flex flex-col gap-0.5 rounded-md border border-gray-200 px-3 py-2 dark:border-gray-700"
+                >
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                        {t.widgetTotal}
+                    </span>
+                    <span className="text-[18px] font-semibold text-gray-800 dark:text-gray-200">
+                        {totalFiles}
+                    </span>
+                </div>
+
+                <div
+                    data-testid="metric-recent"
+                    className="flex flex-col gap-0.5 rounded-md border border-gray-200 px-3 py-2 dark:border-gray-700"
+                >
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                        {t.widgetRecent}
+                    </span>
+                    <span className="text-[18px] font-semibold text-gray-800 dark:text-gray-200">
+                        {recentFiles}
+                    </span>
+                </div>
+            </div>
+
+            {/* ── Action ── */}
             <button
                 type="button"
-                onClick={handleAction}
+                id="widget-open-library-btn"
+                onClick={handleOpenLibrary}
                 className="self-start rounded-md border border-gray-200 px-3 py-1.5 text-[13px] hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 transition-colors"
             >
                 {t.actionBtn}
@@ -95,7 +128,6 @@ function MediaTestDashboardWidgetInner({ context }: MediaTestDashboardWidgetProp
 }
 
 // ── Public export — wrapped in ErrorBoundary + Suspense ──────────────────────
-
 export function MediaTestDashboardWidget({ context }: MediaTestDashboardWidgetProps) {
     return (
         <ErrorBoundary>
