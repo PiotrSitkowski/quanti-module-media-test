@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "kernel-version": ">=0.4.0",
-  "last-verified": "2026-03-25",
+  "kernel-version": ">=0.5.0",
+  "last-verified": "2026-04-23",
   "description": "Złote Ścieżki — In-Context Learning dla agentów AI. Każdy przykład zawiera pełny cykl TDD: RED → GREEN → Antywzorce.",
   "examples": [
     {
@@ -59,6 +59,13 @@
       "file": "CS-08-UIKit-Slots.md",
       "title": "Quanti UI Kit — Inteligentne Sloty i Dane z context",
       "triggers": ["ui", "component", "slot", "mfe", "props.context", "shadcn", "button", "table"]
+    },
+    {
+      "id": "CS-09",
+      "primitive": "EdgePanels",
+      "file": "CS-09-EdgePanels-Sizing.md",
+      "title": "Edge Panels — Content-Driven Visibility i Sterowanie Wymiarami z Poziomu Modułu",
+      "triggers": ["edge panel", "top_bar", "bottom_bar", "left_module_primary", "right_sidebar", "preferredSize", "metadata", "sidebar height", "sidebar width", "panel size"]
     }
   ]
 }

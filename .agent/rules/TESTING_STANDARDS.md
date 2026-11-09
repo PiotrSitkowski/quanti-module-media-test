@@ -61,4 +61,64 @@ contract.test.ts                      — contract/schema edge-case tests
 **If tests fail → deploy is BLOCKED. No exceptions.**
 
 ---
+
+## 7. Mentor AI Audit — Component Test Checklist
+
+> This section defines what the Mentor AI system MUST check during `quanti deploy` hot validation.
+> It parses test files for structural markers — missing markers produce WARNING or BLOCK verdicts.
+
+### 7.1 Required Coverage (BLOCK if missing)
+
+Every `*.test.tsx` component file MUST contain tests tagged with these comment markers:
+
+| Marker | What to test | Block on missing? |
+|---|---|---|
+| `GUARD_CLAUSE` | Component renders safely when `props.context` is `undefined` or `null` | YES |
+| `MINIMAL_CTX` | Renders with only `projectId` (all optional fields absent) | YES |
+| `API_ISOLATION` | `dispatchQuantiEvent` is NOT called on initial mount | YES |
+
+Example minimal compliant test:
+```typescript
+// GUARD_CLAUSE
+it('renders safely when context is undefined', () => {
+    const { container } = render(<MyComponent context={undefined as any} />);
+    expect(container.firstChild).toBeTruthy();
+});
+```
+
+### 7.2 Recommended Coverage (WARNING if missing)
+
+| Area | What to verify |
+|---|---|
+| `LANG_SWITCH` | Renders without crash when `lang='pl'` |
+| `BUSINESS_LOGIC` | At least one domain assertion beyond `container.firstChild` |
+| Behavior rules | Test cases derived from `definition.ts → behaviorRules` |
+| Data semantics | Status field values match `definition.ts → dataSemantics` |
+
+### 7.3 Anti-Patterns (Mentor AI REJECTS)
+
+| Anti-pattern | Reason |
+|---|---|
+| `expect(true).toBe(true)` placeholder | Not a real assertion |
+| Mocking `useModuleTranslation` | Hook must run against real translation data |
+| Direct `fetch` / `axios` in test setup | Use `makeContext().api.dispatchQuantiEvent` |
+| No `afterEach(() => cleanup())` | Memory leak between tests |
+| `screen.getByText` with hardcoded English strings | Breaks when lang changes |
+
+### 7.4 Context Mock Contract
+
+Always use `makeContext()` from `src/test-utils/makeContext.ts` — never inline raw objects.
+This ensures every test simulates the host Shell contract correctly.
+
+```typescript
+// ✅ Correct
+const ctx = makeContext();
+const ctx = makeContext({ lang: 'pl' });
+const ctx = makeContext({ api: undefined });  // simulate missing api
+
+// ✗ Wrong — missing api mock, wrong lang type
+const ctx = { projectId: 1, instanceKey: 'default' };
+```
+
+---
 *Regenerate: `quanti create media-test`*

@@ -61,5 +61,33 @@ Use the Tailwind drag-and-drop pattern (no bare `<input type="file">` without st
 </label>
 ```
 
+## Potwierdzanie zapisu — toast dla ręcznego, status dla automatycznego
+
+Rozstrzygnięcie prowadzącego 2026-08-15, po czterech zgłoszeniach tej samej rzeczy.
+Obowiązuje każdy moduł floty, nie tylko edytory.
+
+- **Zapis RĘCZNY musi potwierdzić się wysuwającym się toastem.** Wołasz `toast(t.saved, 'success')`
+  z `@quanti/ui-kit`; rysuje go jądro w prawym dolnym rogu i sam znika po dwóch sekundach. Zapis,
+  który niczego nie mówi, jest z drugiej strony ekranu nieodróżnialny od zapisu, który się
+  nie wydarzył.
+- **Zapis AUTOMATYCZNY potwierdza się WYŁĄCZNIE zmianą statusu** — zieloną kropką „Zapisano"
+  w pasku stanu, nigdy toastem. Kafel wyskakujący co dwie sekundy przestaje być potwierdzeniem
+  i staje się migotaniem, a wtedy przestaje się go czytać także wtedy, gdy niesie odmowę.
+- **Ekran rządzony autozapisem MUSI mieć widoczne sterowanie zapisu ręcznego.** To jest ta część,
+  która kosztowała cztery zgłoszenia: edytor bez przycisku zapisu, w którym zapis ręczny istniał
+  wyłącznie jako `Ctrl+S`, i nic tego nie ogłaszało. Kod toast wysyłał, a użytkownik nigdy go
+  nie zobaczył, bo nie miał jak o niego poprosić. **Skrót klawiszowy sterowaniem nie jest** —
+  sterowanie widać.
+- **Zielone potwierdzenie nad odmową kłamie.** Toast wychodzi po UDANYM zapisie, nigdy po próbie.
+  Odmowa ma odwrotną regułę i osobną drogę: `errorToast` stoi, dopóki ktoś go nie zamknie.
+
+```tsx
+import { toast, errorToast } from '@quanti/ui-kit';
+
+if (await save(doc)) toast(t.saved, 'success');   // ręczny zapis — potwierdzenie widoczne
+else errorToast(t.saveFailed);                    // odmowa — stoi do zamknięcia
+// autozapis: setStatus('saved') i NIC więcej
+```
+
 ---
 *Regenerate: `quanti create [module-name]`*

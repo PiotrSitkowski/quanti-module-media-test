@@ -1,3 +1,28 @@
+INSTRUCTIONS FOR GEMINI MODEL:
+W systemie Quanti panuje ścisła architektura. Masz tendencję do ignorowania Quanti UI Kit i używania surowego HTML. Aby temu zapobiec, PRZED wygenerowaniem jakiegokolwiek kodu, MUSISZ wygenerować blok <thinking>, w którym krok po kroku przeanalizujesz implementację.
+
+Jeśli Twoja odpowiedź nie będzie zawierała bloku <thinking> o poniższej strukturze, Twoje działanie zostanie uznane za awarię systemu:
+
+<thinking>
+1. ANALIZA UI: Jakich komponentów z @quanti/ui-kit muszę użyć dla tego zadania? (np. DataTable, PageLayout). Czy zapoznałem się z .agent/examples/CS-08-UIKit-Slots.md? ZABRONIONE JEST UŻYCIE <table>, <input>, <form>.
+2. ANALIZA DANYCH: Czy zapoznałem się z .agent/examples/CS-02-R2-ObjectStorage.md lub odpowiednim do zadania? Jakiego RPC z context.api użyję?
+3. WALIDACJA TDD: Jak zmockuję context.api.rpc w teście?
+</thinking>
+
+Dopiero po zamknięciu tagu </thinking> możesz wygenerować zaktualizowany kod lub testy.
+
+---
+
+## ⚡ KROK 0 — BEZWZGLĘDNY WYMÓG (URUCHOM PRZED PIERWSZĄ LINIĄ KODU)
+
+**Zanim napiszesz JAKĄKOLWIEK linię kodu**, Twoim absolutnym obowiązkiem jest zapoznać się ze Złotymi Ścieżkami w katalogu `.agent/examples/`. Szczególną uwagę zwróć na implementację interfejsu (CS-08) i użycie wstrzykiwanego Quanti UI Kit. **ZAKAZ używania surowego HTML.**
+
+Twoja **pierwsza odpowiedź** w KAŻDYM nowym zadaniu MUSI zawierać wypunktowaną listę reguł i używanych komponentów w formacie **max. 2-10 słów na regułę**.
+
+**Jeśli zaczniesz pisać kod bez tego podsumowania, łamiesz krytyczny protokół platformy.**
+
+---
+
 # QUANTI FLEET PROTOCOL — Agent Rules
 
 You are operating inside a Quanti Fleet module.

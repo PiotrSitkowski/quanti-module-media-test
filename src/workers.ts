@@ -8,6 +8,7 @@
  * Event format: { event_id, type, version, context: { projectId, instanceKey, traceId }, data }
  */
 import { WorkerEntrypoint } from 'cloudflare:workers';
+import { reportWorkerError } from './utils/report-error';
 
 interface Env {
     BACKEND: any;
@@ -27,7 +28,7 @@ interface QueueEvent {
 }
 
 export default {
-    async queue(batch: MessageBatch<QueueEvent>, env: Env): Promise<void> {
+    async queue(batch: MessageBatch<QueueEvent>, env: Env, ctx?: ExecutionContext): Promise<void> {
         for (const msg of batch.messages) {
             try {
                 const event = msg.body;
@@ -63,6 +64,7 @@ export default {
                 msg.ack();
             } catch (err) {
                 console.error('Event processing failed:', err);
+                reportWorkerError(env as never, ctx, msg.body?.context?.traceId ?? 'no-trace', 'media-test', 'MEDIA_TEST_QUEUE_EVENT_FAILED', { projectId: msg.body?.context?.projectId, operation: 'queue' });
                 msg.retry();
             }
         }

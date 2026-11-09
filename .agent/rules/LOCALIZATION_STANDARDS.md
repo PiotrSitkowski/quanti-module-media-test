@@ -24,11 +24,14 @@ Asymmetry (key in one file but not the other) is blocked by `quanti validate`.
 
 ### Rule 3 — No Hardcoded User-Facing Strings in .tsx
 FORBIDDEN: string literals in .tsx components for user-visible text.
-REQUIRED: `useModuleTranslation(props.context?.lang)` and reference translation keys.
+REQUIRED: `useModuleTranslation(resolveLang(props.context))` and reference translation keys.
 
-### Rule 4 — Lang Comes from Context
-The host shell sets the language via `props.context.lang`.
-Modules MUST NOT maintain lang state — they are consumers only.
+### Rule 4 — Lang Comes from Context (dual channel)
+The host shell sets the language via TWO channels: the FaD path
+(PlacementBoundary) threads `context.locale`, the legacy module page threads
+`context.lang`. ALWAYS resolve through `resolveLang(context)` from
+src/hooks/useModuleTranslation.ts — reading a single channel makes the module
+EN-only on the other path. Modules MUST NOT maintain lang state — consumers only.
 
 ### Rule 5 — Adding New Keys
 When adding a new user-facing string:
@@ -53,10 +56,10 @@ export const translations = {
 ## Hook Usage in .tsx
 
 ```tsx
-import { useModuleTranslation } from '../hooks/useModuleTranslation.js';
+import { useModuleTranslation, resolveLang } from '../hooks/useModuleTranslation.js';
 
 export function MyComponent({ context }: Props) {
-    const t = useModuleTranslation(props.context?.lang as 'en' | 'pl');
+    const t = useModuleTranslation(resolveLang(context));
     return <button>{t.uploadBtn}</button>;  // ✅ CORRECT
     // return <button>Upload</button>;     // ❌ FORBIDDEN — hardcoded string
 }
