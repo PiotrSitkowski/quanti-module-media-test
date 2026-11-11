@@ -16,6 +16,11 @@ import { z } from 'zod';
 export const media_testDefinition = {
     id:            'media-test',
     name:          'Media Library',
+    // The words a person reads in the panel, in both languages; `name` stays the registry's own.
+    identity: {
+        name:        { en: { value: 'Media Library', provenance: 'creator' }, pl: { value: 'Biblioteka mediów', provenance: 'creator' } },
+        description: { en: { value: 'Images and files kept in R2: upload, gallery with thumbnails, alt text, soft delete.', provenance: 'creator' }, pl: { value: 'Zdjęcia i pliki przechowywane w R2: wgrywanie, galeria z miniaturami, teksty alternatywne, miękkie usuwanie.', provenance: 'creator' } },
+    },
     serviceType:   'content',
     schemaVersion: 2,
     version:       '1.1.0',
