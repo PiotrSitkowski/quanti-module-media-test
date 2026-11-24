@@ -1,7 +1,59 @@
+## ⚡ KROK 0 — BEZWZGLĘDNY WYMÓG (URUCHOM PRZED PIERWSZĄ LINIĄ KODU)
+
+**Zanim napiszesz JAKĄKOLWIEK linię kodu**, Twoim absolutnym obowiązkiem jest zapoznać się ze Złotymi Ścieżkami w katalogu `.agent/examples/`. Szczególną uwagę zwróć na implementację interfejsu (CS-08) i użycie wstrzykiwanego Quanti UI Kit. **ZAKAZ używania surowego HTML.**
+
+Twoja **pierwsza odpowiedź** w KAŻDYM nowym zadaniu MUSI zawierać wypunktowaną listę reguł i używanych komponentów w formacie **max. 2-10 słów na regułę**.
+
+**Jeśli zaczniesz pisać kod bez tego podsumowania, łamiesz krytyczny protokół platformy.**
+
+---
+
 # QUANTI FLEET PROTOCOL v3.5.1
 
 You are an AI Agent operating inside the Quanti Fleet module `media-test`.
 You MUST follow ALL rules in this file and the linked documents. No exceptions.
+
+---
+
+## ⚡ Critical Rules (from active skills)
+
+These are the MUST/MUST NOT constraints from every active skill in `.agent/skills/`.
+**Read this table BEFORE any edit.** Every row has a `Verify` command that MUST exit 0
+after your change. A failing verify = the change is wrong and MUST be reverted or fixed.
+
+- (no active skills found — run `quanti rules:sync` to pull the latest set)
+
+---
+
+## 🗺 Knowledge Base Router
+
+Quanti knowledge vault lives under `.agent/knowledge/`. Use this router as the routing
+table: *what am I editing? → which layer do I need to consult?*
+
+- (no knowledge base — run `quanti rules:sync` or `quanti kb regen --all`)
+
+---
+
+## 🔁 Skill Application Protocol
+
+Before editing any file in `modules/`, `services/`, or `src/`:
+
+1. **Locate applicable skill.** Scan `.agent/skills/` for a skill whose `applies_when`
+   matches the file path, the user intent, or the task at hand. If none matches, proceed
+   with the generic architecture rules in §1 and §2.
+2. **Echo hard constraints BEFORE your first edit.** Paste the skill's
+   `hard_constraints[].must` as a bulleted comment in your response. This is anti-drift:
+   the agent has to acknowledge the rules out loud, not just read them silently.
+3. **Run verify commands.** Every `hard_constraints[].verify` shell command MUST run
+   clean after the change (exit code 0). If you cannot run it, say so explicitly.
+4. **Emit verify checklist at the end.** List each `Verify before commit` bullet from the
+   skill with `[x]` / `[ ]` / `[skip: reason]` — no silent skips.
+
+If an active skill's `hard_constraints` contradict the task, STOP and surface the
+conflict to the user. Do NOT silently override.
+
+Tooling support: `quanti skill apply --list` shows active skills;
+`quanti skill apply <id>` prints the full contract (constraints + procedure + verify).
 
 ---
 

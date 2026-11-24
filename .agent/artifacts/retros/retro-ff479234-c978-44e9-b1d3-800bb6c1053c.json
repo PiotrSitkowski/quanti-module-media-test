@@ -1,0 +1,46 @@
+{
+  "deploy_session_id": "ff479234-c978-44e9-b1d3-800bb6c1053c",
+  "module_id": "media-test",
+  "module_version": "1.0.0",
+  "cli_version": "2.0.0",
+  "git_commit": "f400b4f",
+  "llm_model": "unknown",
+  "llm_provider": "unknown",
+  "deploy_outcome": "SUCCESS",
+  "duration_ms": 16889,
+  "steps_completed": 13,
+  "steps_total": 13,
+  "scores": {
+    "overall_friction": 7,
+    "api_clarity": 8,
+    "docs_accuracy": 7,
+    "tooling_reliability": 9,
+    "error_message_quality": 9,
+    "boilerplate_quality": 6
+  },
+  "friction_log": [
+    {
+      "phase": "cold_validation",
+      "issue": "Fleet Guard enforces a strict naming convention: component name in uiExtensions[] must exactly match the .tsx filename. The scaffold generated MediaTestDashboardWidget.tsx but registered it in definition.ts as MediaTestWidget. This mismatch is invisible until deploy.",
+      "severity": "blocker",
+      "resolution": "Renamed the component entry in definition.ts from MediaTestWidget to MediaTestDashboardWidget to match the actual file.",
+      "time_spent_min": 3
+    }
+  ],
+  "success_patterns": [
+    "Fleet Guard cold validation error message was precise and actionable.",
+    "13-step deploy pipeline with per-step status made it trivial to identify which phase blocked.",
+    "Bundle and manifest hashes in output provide instant diff visibility across deploys."
+  ],
+  "improvement_suggestions": "The single highest-impact change would be a scaffold-time consistency check between uiExtensions[].component values in definition.ts and the actual .tsx filenames generated. Make definition.ts the single source of truth for component names and have the scaffold generator derive filenames from it.",
+  "deploy_flags": {
+    "dry_run": false,
+    "register_only": false,
+    "skip_register": false,
+    "skip_mentor": false,
+    "skip_tests": false,
+    "no_mfe": false,
+    "force": false
+  },
+  "mfe_present": true
+}

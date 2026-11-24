@@ -1,0 +1,17 @@
+# Test Run — 2026-04-26T12:46:55.157Z
+
+> quanti-module-media-test@1.0.0 test
+> vitest run
+
+
+ RUN  v3.2.4 /Users/piotr/internet-web/Universal_media/Quanti/Quanti-CLI/quanti-module-media-test
+
+ ✓ src/worker.test.ts (3 tests) 158ms
+ ✓ src/components/MediaTestDetailPanel.test.tsx (3 tests) 58ms
+ ✓ src/components/MediaTestDashboardWidget.test.tsx (3 tests) 60ms
+ ✓ src/components/MediaTestTable.test.tsx (3 tests) 60ms
+
+ Test Files  4 passed (4)
+      Tests  12 passed (12)
+   Start at  14:46:50
+   Duration  3.41s (transform 284ms, setup 0ms, collect 1.61s, tests 336ms, environment 3.69s, prepare 1.03s)

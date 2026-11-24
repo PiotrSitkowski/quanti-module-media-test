@@ -22,7 +22,7 @@
  *   - Register metadata via context.api.rpc after successful upload
  */
 
-import React, { Suspense, useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useModuleTranslation } from '../hooks/useModuleTranslation.js';
 import { uploadToR2 } from '../lib/r2Upload.js';
 
@@ -263,13 +263,11 @@ function MediaTestTableInner({ context }: MediaTestTableProps) {
     );
 }
 
-// ── Public export — wrapped in ErrorBoundary + Suspense ──────────────────────
+// ── Public export — wrapped in ErrorBoundary ─────────────────────────────────
 export function MediaTestTable({ context }: MediaTestTableProps) {
     return (
         <ErrorBoundary>
-            <Suspense fallback={<p className="text-[13px] text-gray-400 animate-pulse">…</p>}>
-                <MediaTestTableInner context={context} />
-            </Suspense>
+            <MediaTestTableInner context={context} />
         </ErrorBoundary>
     );
 }

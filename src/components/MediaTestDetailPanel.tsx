@@ -17,7 +17,7 @@
  *   - NEVER hardcode user-visible strings — use `t.key` from useModuleTranslation
  */
 
-import React, { Suspense, useState } from 'react';
+import React, { useState } from 'react';
 import { useModuleTranslation } from '../hooks/useModuleTranslation.js';
 
 interface SelectedMedia {
@@ -231,13 +231,11 @@ function MediaTestDetailPanelInner({ context }: MediaTestDetailPanelProps) {
     );
 }
 
-// ── Public export — wrapped in ErrorBoundary + Suspense ──────────────────────
+// ── Public export — wrapped in ErrorBoundary ─────────────────────────────────
 export function MediaTestDetailPanel({ context }: MediaTestDetailPanelProps) {
     return (
         <ErrorBoundary>
-            <Suspense fallback={<p className="text-[13px] text-gray-400 animate-pulse">…</p>}>
-                <MediaTestDetailPanelInner context={context} />
-            </Suspense>
+            <MediaTestDetailPanelInner context={context} />
         </ErrorBoundary>
     );
 }

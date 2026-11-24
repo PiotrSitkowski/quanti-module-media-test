@@ -1,0 +1,86 @@
+{
+  "$schema": "https://quanti.dev/schemas/manifest.v1.json",
+  "version": 1,
+  "module": {
+    "name": "quanti-module-media-test",
+    "displayName": "Media Test",
+    "version": "1.0.0",
+    "description": "Moduł biblioteki mediów umożliwiający zarządzanie zdjęciami i plikami"
+  },
+  "fleet": {
+    "serviceType": "content",
+    "requestedCapabilities": [
+      "crud"
+    ],
+    "schemaVersion": 2
+  },
+  "build": {
+    "entryPoint": "src/worker.ts",
+    "outputFile": "dist/worker.js",
+    "bundleHash": "sha256:1791ae4cffa9c60d5cb11d4d16aee4b9433b2c71984cefad4646a8cd6b1c52a3",
+    "bundleSize": 3968,
+    "builtAt": "2026-04-26T12:46:56.462Z"
+  },
+  "bindings": {
+    "services": [
+      {
+        "binding": "BACKEND",
+        "service": "quanti-backend"
+      }
+    ],
+    "queues": [
+      {
+        "binding": "QUEUE_MAIN",
+        "queue": "quanti-main-queue"
+      }
+    ]
+  },
+  "contract": {
+    "methods": [
+      "list",
+      "getById",
+      "create",
+      "update",
+      "delete"
+    ]
+  },
+  "semantic_knowledge": {
+    "overview": "Moduł biblioteki mediów umożliwiający zarządzanie zdjęciami i plikami przechowywanymi\nw Cloudflare R2 Object Storage. Obsługuje upload plików przez presigned URL (pattern CS-02),\nprzeglądanie galerii z podglądem miniatur, edycję metadanych (alt text) oraz miękkie\nusuwanie z asynchronicznym czyszczeniem R2 przez Queue consumer.",
+    "fileMap": "| Plik | Logika Biznesowa |\n|------|-----------------|\n| src/worker.ts | WorkerEntrypoint — RPC CRUD dla mediów: list (filtruje DELETED), create (rejestruje metadata po R2 upload), update (alt/status), delete (soft-delete → status DELETED) |\n| src/workers.ts | CQRS Queue Consumer — przetwarza zdarzenia media_test.created/.updated/.deleted, trigger czyszczenia R2 po soft-delete |\n| src/lib/r2Upload.ts | CS-02 helper — uploadToR2() wysyła plik binarny bezpośrednio na R2 przez presigned PUT URL; jedyne miejsce gdzie fetch() nie idzie do backendu Fleet |\n| src/components/MediaTestTable.tsx | Slot media_test_main_view — galeria z grid miniatur obrazów, upload przez CS-02 presigned URL z bezpośrednim PUT na R2, akcja delete z potwierdzeniem przez dispatchQuantiEvent |\n| src/components/MediaTestDetailPanel.tsx | Slot media_test_detail_panel — podgląd wybranego pliku z metadanymi (filename, size, type, status), edycja alt text przez RPC update, soft-delete przez dispatchQuantiEvent confirm modal |\n| src/components/MediaTestDashboardWidget.tsx | Slot dashboard_widget — kafelek z metrykami biblioteki mediów (totalFiles, recentFiles) ładowanymi z context.data (Kernel snapshot — zero fetch przy mount) |\n| src/components/index.ts | Barrel export komponentów MFE: MediaTestTable, MediaTestDetailPanel, MediaTestDashboardWidget |\n| src/hooks/useModuleTranslation.ts | Hook i18n — zwraca obiekt translations dla lang (en/pl) z context.lang, default en |\n| src/locales/en.ts | Tłumaczenia angielskie (source of truth) — klucze galerii: uploadBtn, uploadSuccess, deleteConfirm, detailTitle, widgetTitle, projectLabel |\n| src/locales/pl.ts | Tłumaczenia polskie — muszą mieć dokładnie te same klucze co en.ts, zweryfikowane przez quanti validate i18n-sync-check |\n| src/locales/index.ts | Barrel export locali — lazy-loaded locale exports dla en i pl |\n| src/index.ts | MFE entry barrel — re-eksportuje wszystkie komponenty dla bundlu MFE (React external) |\n| schema.ts | Drizzle ORM schema definitywna dla tabeli media_test: mandatory cols (id, project_id, instance_key, metadata) + media cols (filename, content_type, size, r2_key, alt, status) |\n| contract.ts | Zod schemas dla payloadów RPC — ListPayload (filtry: status, contentType, limit), CreatePayload (wymaga: filename, contentType, size, r2Key), UpdatePayload (alt, status), DeletePayload |\n| definition.ts | Manifest modułu Quanti: id=media-test, schemaVersion=2, slots x3, mcpTools x4, dataSemantics, columnSemantics, processGraph.participatesIn, configSchema |",
+    "rulesAndConstraints": "- **Brak env.R2 binding** — Fleet modules nie mają bezpośredniego bindingu R2. Presigned URL pochodzi z Kernel media service przez context.api.rpc.\n- **Soft-delete only** — usunięcie ustawia status = DELETED; plik R2 jest czyszczony asynchronicznie przez Queue consumer w src/workers.ts.\n- **Tylko obrazy** — accept=\"image/*\" w file input; content_type walidowany przez Zod.\n- **Tenant isolation** — każde zapytanie filtruje po project_id AND instance_key.\n- **Brak JOINów** — odczyt flat SELECT, metadane w JSON blob.",
+    "orchestrationGuide": "**Triggered by:**\n- RPC media-test.list — przeglądanie galerii (filtr: status != DELETED)\n- RPC media-test.getById — podgląd szczegółów w panelu bocznym\n- RPC media-test.create — rejestracja metadata po udanym upload do R2\n- RPC media-test.update — edycja alt text lub zmiany statusu\n- RPC media-test.delete — soft-delete (status → DELETED)\n\n**Emits:**\n- media_test.created — po create(), dane: { id, filename, contentType, size, r2Key }\n- media_test.updated — po update(), dane: { id }\n- media_test.deleted — po delete(), dane: { id } — konsumowany przez workers.ts dla R2 cleanup\n\n**Composes with:**\n- Kernel media service — dostarcza presigned URL dla R2 uploads\n- QUEUE_MAIN — asynchroniczne czyszczenie R2 po soft-delete"
+  },
+  "supportedLanguages": [
+    "en",
+    "pl"
+  ],
+  "configuration": {
+    "schema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "ui": {}
+  },
+  "uiExtensions": [
+    {
+      "slot": "media_test_main_view",
+      "component": "MediaTestTable",
+      "priority": 10,
+      "description": "Main media gallery view displaying all uploaded images for a project as a responsive grid with thumbnail previews. Enables users to upload new images via presigned R2 URL, browse existing media, and trigger file deletion with confirmation modal."
+    },
+    {
+      "slot": "media_test_detail_panel",
+      "component": "MediaTestDetailPanel",
+      "priority": 10,
+      "description": "Side panel showing full metadata of the currently selected media file including filename, size, MIME type, upload date and editable alt text. Provides save and soft-delete actions. Panel is empty when no file is selected in the gallery."
+    },
+    {
+      "slot": "dashboard_widget",
+      "component": "MediaTestDashboardWidget",
+      "priority": 10,
+      "description": "Dashboard tile for the media library module showing total file count and number of files uploaded in the last seven days. Uses pre-loaded Kernel snapshot data — no additional RPC calls on mount. Clicking the action button navigates to the full gallery view."
+    }
+  ]
+}

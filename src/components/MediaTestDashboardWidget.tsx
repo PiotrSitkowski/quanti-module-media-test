@@ -18,7 +18,7 @@
  *   - NEVER hardcode user-visible strings — use `t.key` from useModuleTranslation
  */
 
-import React, { Suspense } from 'react';
+import React from 'react';
 import { useModuleTranslation } from '../hooks/useModuleTranslation.js';
 
 interface MediaTestDashboardWidgetProps {
@@ -127,13 +127,11 @@ function MediaTestDashboardWidgetInner({ context }: MediaTestDashboardWidgetProp
     );
 }
 
-// ── Public export — wrapped in ErrorBoundary + Suspense ──────────────────────
+// ── Public export — wrapped in ErrorBoundary ─────────────────────────────────
 export function MediaTestDashboardWidget({ context }: MediaTestDashboardWidgetProps) {
     return (
         <ErrorBoundary>
-            <Suspense fallback={<p className="text-[13px] text-gray-400 animate-pulse">…</p>}>
-                <MediaTestDashboardWidgetInner context={context} />
-            </Suspense>
+            <MediaTestDashboardWidgetInner context={context} />
         </ErrorBoundary>
     );
 }

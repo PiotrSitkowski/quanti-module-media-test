@@ -10,3 +10,4 @@ export { media_testTable } from '../schema';
 export { MediaTestTable } from './components/MediaTestTable';
 export { MediaTestDetailPanel } from './components/MediaTestDetailPanel';
 export { MediaTestDashboardWidget } from './components/MediaTestDashboardWidget';
+export { MediaTestDashboardWidget as MediaTestWidget } from './components/MediaTestDashboardWidget';

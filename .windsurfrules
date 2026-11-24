@@ -1,3 +1,13 @@
+## ⚡ KROK 0 — BEZWZGLĘDNY WYMÓG (URUCHOM PRZED PIERWSZĄ LINIĄ KODU)
+
+**Zanim napiszesz JAKĄKOLWIEK linię kodu**, Twoim absolutnym obowiązkiem jest zapoznać się ze Złotymi Ścieżkami w katalogu `.agent/examples/`. Szczególną uwagę zwróć na implementację interfejsu (CS-08) i użycie wstrzykiwanego Quanti UI Kit. **ZAKAZ używania surowego HTML.**
+
+Twoja **pierwsza odpowiedź** w KAŻDYM nowym zadaniu MUSI zawierać wypunktowaną listę reguł i używanych komponentów w formacie **max. 2-10 słów na regułę**.
+
+**Jeśli zaczniesz pisać kod bez tego podsumowania, łamiesz krytyczny protokół platformy.**
+
+---
+
 # QUANTI FLEET PROTOCOL — Agent Rules
 
 You are operating inside a Quanti Fleet module.

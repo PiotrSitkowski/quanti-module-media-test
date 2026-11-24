@@ -18,7 +18,7 @@ export const media_testDefinition = {
     name:          'Media Library',
     serviceType:   'content',
     schemaVersion: 2,
-    version:       '1.1.0',
+    version:       '1.0.0',
     icon:          'Image',
 
     description: `Moduł biblioteki mediów umożliwiający zarządzanie zdjęciami i plikami
@@ -31,10 +31,7 @@ export const media_testDefinition = {
 
     slots:         ['media_test_main_view', 'media_test_detail_panel', 'dashboard_widget'],
     permissions:   [],
-    behaviorRules: [
-        // Soft-delete only — R2 cleanup happens asynchronously via Queue consumer
-        { 'if': [{ '==': [{ 'var': 'action' }, 'delete'] }, 'soft-delete', 'proceed'] },
-    ],
+    behaviorRules: [],
 
     mcpTools: {
         create_media_test: {
@@ -166,14 +163,7 @@ export const media_testDefinition = {
             },
         ],
 
-        automations: [
-            {
-                name:      'soft-delete-r2-cleanup',
-                trigger:   { event: 'media_test.deleted' },
-                condition: { '==': [{ 'var': 'data.status' }, 'DELETED'] },
-                action:    { module: 'media-test', method: 'triggerR2Cleanup', mapping: { id: 'data.id', r2Key: 'data.r2Key' } },
-            },
-        ],
+        automations: [],
 
         relations: [],
     },
@@ -204,20 +194,7 @@ export type MediaTestModuleDefinition = typeof media_testDefinition;
 
 // ─── Module Configuration Schema ──────────────────────────────────────────────
 export const configSchema = z.object({
-    // Maximum file size in MB allowed for upload
-    maxFileSizeMb:    z.number().min(1).max(100).default(10),
-    // Allowed MIME types (comma-separated)
-    allowedMimeTypes: z.string().default('image/jpeg,image/png,image/webp,image/gif'),
-    // Gallery items per page
-    itemsPerPage:     z.number().min(10).max(200).default(50),
-    // Enable alt text AI suggestions (requires AI capability)
-    enableAiAlt:      z.boolean().default(false),
 });
 
-// ─── Configuration UI Hints ───────────────────────────────────────────────────
 export const configUi: Record<string, { label: string; widget: string; showIf?: unknown }> = {
-    maxFileSizeMb:    { label: 'Max file size (MB)',      widget: 'slider' },
-    allowedMimeTypes: { label: 'Allowed MIME types',      widget: 'text' },
-    itemsPerPage:     { label: 'Gallery items per page',  widget: 'slider' },
-    enableAiAlt:      { label: 'AI alt text suggestions', widget: 'toggle' },
 };

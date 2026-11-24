@@ -1,0 +1,39 @@
+{
+  "deploy_session_id": "31ea9d65-91c8-44ba-8c9b-d9c818500f29",
+  "module_id": "media-test",
+  "module_version": "1.0.0",
+  "cli_version": "2.0.1",
+  "git_commit": "f400b4f",
+  "llm_model": "unknown",
+  "llm_provider": "unknown",
+  "deploy_outcome": "SUCCESS",
+  "duration_ms": 17826,
+  "steps_completed": 13,
+  "steps_total": 13,
+  "scores": {
+    "overall_friction": 8,
+    "api_clarity": 8,
+    "docs_accuracy": 8,
+    "tooling_reliability": 8,
+    "error_message_quality": 8
+  },
+  "friction_log": [
+    {
+      "phase": "other",
+      "issue": "Uncommitted changes detected in working tree",
+      "severity": "minor"
+    }
+  ],
+  "success_patterns": [],
+  "improvement_suggestions": "(auto-generated — non-interactive context)",
+  "deploy_flags": {
+    "dry_run": false,
+    "register_only": false,
+    "skip_register": false,
+    "skip_mentor": false,
+    "skip_tests": false,
+    "no_mfe": false,
+    "force": false
+  },
+  "mfe_present": true
+}
