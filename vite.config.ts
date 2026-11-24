@@ -8,7 +8,7 @@
  * from the host shell's Import Map, not bundled into the MFE.
  */
 
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 /**
@@ -128,11 +128,25 @@ export default defineConfig(({ command }) => ({
         // A browser per test file is the suite's largest cost (Canvas Studio, 2026-10-31: 1763 s of environment across
         // 668 files, 908 s with logic in node). Logic tests run in node; a .ts test that needs a DOM outside these paths
         // says so with `// @vitest-environment jsdom` on its first line.
+        // Two projects, not per-path environment globs — vitest 3 reports that option as deprecated on every run.
         environment: 'node',
-        environmentMatchGlobs: [
-            ['**/*.{test,spec}.tsx', 'jsdom'],
-            ['src/components/**', 'jsdom'],
-            ['src/hooks/**', 'jsdom'],
+        projects: [
+            {
+                extends: true,
+                test: {
+                    name: 'node',
+                    environment: 'node',
+                    exclude: [...configDefaults.exclude, '**/*.{test,spec}.tsx', 'src/components/**', 'src/hooks/**'],
+                },
+            },
+            {
+                extends: true,
+                test: {
+                    name: 'dom',
+                    environment: 'jsdom',
+                    include: ['**/*.{test,spec}.tsx', 'src/components/**/*.{test,spec}.?(c|m)[jt]s?(x)', 'src/hooks/**/*.{test,spec}.?(c|m)[jt]s?(x)'],
+                },
+            },
         ],
         resolve: {
             extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
