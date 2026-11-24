@@ -127,26 +127,26 @@ export const media_testDefinition = {
     // ─── Semantic Fabric ──────────────────────────────────────────────────────
     columnSemantics: {
         filename: {
-            semanticType: 'label',
+            semanticType: 'text',
             aiHint:       'Original filename as provided by the user browser during upload.',
         },
         contentType: {
-            semanticType: 'category',
+            semanticType: 'enum',
             values:       ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'],
             aiHint:       'MIME type of the stored file. Filter by this field to find images only.',
         },
         size: {
-            semanticType: 'quantity',
+            semanticType: 'metric',
             unit:         'bytes',
             aggregatable: true,
             aiHint:       'File size in bytes. Sum for quota, divide by 1048576 for MB display.',
         },
         r2Key: {
-            semanticType: 'reference',
+            semanticType: 'identifier',
             aiHint:       'R2 object key in the format proj_{id}/{year}/{month}/{uuid}.{ext}. Never expose directly to users.',
         },
         alt: {
-            semanticType: 'label',
+            semanticType: 'text',
             aiHint:       'Accessibility alt text. Suggest AI-generated description if empty.',
         },
         status: {
@@ -212,21 +212,11 @@ export const media_testDefinition = {
 export type MediaTestModuleDefinition = typeof media_testDefinition;
 
 // ─── Module Configuration Schema ──────────────────────────────────────────────
-export const configSchema = z.object({
-    // Maximum file size in MB allowed for upload
-    maxFileSizeMb:    z.number().min(1).max(100).default(10),
-    // Allowed MIME types (comma-separated)
-    allowedMimeTypes: z.string().default('image/jpeg,image/png,image/webp,image/gif'),
-    // Gallery items per page
-    itemsPerPage:     z.number().min(10).max(200).default(50),
-    // Enable alt text AI suggestions (requires AI capability)
-    enableAiAlt:      z.boolean().default(false),
-});
+// Empty on purpose (2026-11-24). This is a trial module, never registered on production, and the four
+// settings it declared (maximum file size, allowed MIME types, items per page, AI alt text) were read by
+// no code: the settings page would have offered switches with no effect. A setting returns together
+// with the code that performs it and a behaviour test.
+export const configSchema = z.object({});
 
 // ─── Configuration UI Hints ───────────────────────────────────────────────────
-export const configUi: Record<string, { label: string; widget: string; showIf?: unknown }> = {
-    maxFileSizeMb:    { label: 'Max file size (MB)',      widget: 'slider' },
-    allowedMimeTypes: { label: 'Allowed MIME types',      widget: 'text' },
-    itemsPerPage:     { label: 'Gallery items per page',  widget: 'slider' },
-    enableAiAlt:      { label: 'AI alt text suggestions', widget: 'toggle' },
-};
+export const configUi: Record<string, { label: string; widget: string; showIf?: unknown }> = {};
