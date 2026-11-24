@@ -87,6 +87,12 @@ Wyjątkiem jest 503, które jest przejściowe i wolno je ponowić z odczekaniem.
 Formularze konfiguracyjne modułu SĄ GENEROWANE AUTOMATYCZNIE przez platformę.
 Moduł NIE implementuje własnego formularza ustawień — zamiast tego:
 1. Zdefiniuj `configSchema` (Zod) w `definition.ts` — struktura i walidacja ustawień
-2. Zdefiniuj `configUi` w `definition.ts` — etykiety, typy widgetów (select/toggle/slider)
-3. Platforma Admin UI odczyta te definicje i wygeneruje formularz automatycznie
+2. Zdefiniuj `configUi` w `definition.ts` — nazwa ustawienia (`label`), opis i grupa (`group`), każde w obu
+   językach panelu: `{ en: '…', pl: '…' }`. Sam napis trafia na ekran bez tłumaczenia i `quanti validate`
+   zgłasza go ostrzeżeniem `settings-one-language`.
+3. Rodzaj kontrolki (`widget`) jest OPCJONALNY — bez niego platforma dobiera kontrolkę z wartości (przełącznik,
+   suwak dla liczby z zakresem, segmenty do czterech krótkich opcji, lista z wyszukiwaniem od pięciu). Podaj go
+   tylko, gdy ma być inaczej: `slider`, `number`, `toggle`, `textarea`, `text`, `segments`, `radio`, `combobox`, `dropdown`.
+4. Ustawienia z tą samą grupą stoją razem; od trzech grup strona rysuje podzakładki z liczbą ustawień.
+5. Platforma odczyta te definicje i narysuje stronę ustawień automatycznie
 Klucze `configSchema` MUSZĄ odpowiadać kluczom `configUi` (wymuszane przez `quanti validate`).

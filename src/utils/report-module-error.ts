@@ -18,10 +18,15 @@
 
 export type ModuleErrorDetails = { operation?: string };
 export type ModuleErrorSink = (code: string, details: ModuleErrorDetails) => void;
-/** The part of the shell's context this helper reads — `context.api.reportError` (kernel: mfe-context.ts). */
+/**
+ * The part of the shell's context this helper reads — `context.api.reportError` (kernel: mfe-context.ts). The
+ * parameters take ANY object: a module's own context type rarely declares `reportError`, and the shape is checked at
+ * run time anyway (a cast at every call site would also silence a real mistake).
+ */
 export interface ModuleErrorContext {
     api?: { reportError?: (code: string, details?: ModuleErrorDetails) => void } | null;
 }
+type AnyContext = object | null | undefined;
 
 const CODE_RE = /^[A-Z][A-Z0-9_]{2,63}$/;
 const ID_RE = /^[A-Za-z0-9_.:-]{1,96}$/;
@@ -45,7 +50,7 @@ function deliver(to: ModuleErrorSink, code: string, details: ModuleErrorDetails)
 }
 
 /** Where reports go from now on: a screen's context, or a sink (the worker's). Delivers what waited. */
-export function installModuleErrorReporter(target: ModuleErrorContext | ModuleErrorSink | null | undefined): void {
+export function installModuleErrorReporter(target: ModuleErrorSink | AnyContext): void {
     const next = sinkOf(target);
     if (!next) return;
     sink = next;
@@ -54,7 +59,7 @@ export function installModuleErrorReporter(target: ModuleErrorContext | ModuleEr
     for (const [code, details] of waiting) deliver(next, code, details);
 }
 
-export function reportModuleError(code: string, details: ModuleErrorDetails = {}, via?: ModuleErrorContext | null): void {
+export function reportModuleError(code: string, details: ModuleErrorDetails = {}, via?: AnyContext): void {
     const safeCode = CODE_RE.test(code) ? code : 'MODULE_ERROR_INVALID_CODE';
     const safe: ModuleErrorDetails = {};
     if (details?.operation && ID_RE.test(details.operation)) safe.operation = details.operation;

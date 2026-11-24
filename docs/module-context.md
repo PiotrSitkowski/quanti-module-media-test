@@ -29,6 +29,8 @@ usuwanie z asynchronicznym czyszczeniem R2 przez Queue consumer.
 | schema.ts | Drizzle ORM schema definitywna dla tabeli media_test: mandatory cols (id, project_id, instance_key, metadata) + media cols (filename, content_type, size, r2_key, alt, status) |
 | contract.ts | Zod schemas dla payloadów RPC — ListPayload (filtry: status, contentType, limit), CreatePayload (wymaga: filename, contentType, size, r2Key), UpdatePayload (alt, status), DeletePayload |
 | definition.ts | Manifest modułu Quanti: id=media-test, schemaVersion=2, slots x3, mcpTools x4, dataSemantics, columnSemantics, processGraph.participatesIn, configSchema |
+| src/utils/report-error.ts | H-ERROR-NOT-IN-AE (CLI template, rewritten by `quanti update`) — `reportWorkerError` for an RPC method that catches a failure or refuses, and `moduleErrorSinkForWorker` that the entrypoint installs; an ERROR row by CODE, never the error's text |
+| src/utils/report-module-error.ts | H-ERROR-NOT-IN-AE (CLI template, rewritten by `quanti update`) — `reportModuleError(CODE, { operation })` from anywhere; delivered to the sink installed once per environment (the screen's context, the worker's sink); code only, never a value |
 
 ## Rules & Constraints
 

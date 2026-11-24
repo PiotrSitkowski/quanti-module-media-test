@@ -43,5 +43,5 @@ dalej, w dotychczasowym kształcie, także przez bramę; nowy kod pisz na `seman
 | czytanie tabel `semantic_registry_*` | kopia w D1 to zapas jądra, nie magazyn modułu |
 | kopia słownika w module (`src/generated/semantics.ts`, stałe z kluczami i opisami) | kopia się starzeje w ciszy (zmierzone: moduł na v29 przy platformie v31) |
 
-Strażnik: `check-registry-gate-access` (jądro, `validate:fleet`) zgłasza każde z powyższych; moduł, który rejestru
+Strażnik: reguła zimna `registry-gate-access` w `quanti validate` / `quanti deploy` (CLI ≥ 2.89.0) zgłasza każde z powyższych; moduł, który rejestru
 nie czyta, przechodzi bez uwag.
