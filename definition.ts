@@ -36,6 +36,10 @@ export const media_testDefinition = {
 
     slots:         ['media_test_main_view', 'media_test_detail_panel', 'dashboard_widget'],
     permissions:   [],
+    // Declared here, in the source — until 2026-11-24 only an untracked build manifest carried it.
+    contract: {
+        methods: ['list', 'getById', 'create', 'update', 'delete'],
+    },
     behaviorRules: [
         // Soft-delete only — R2 cleanup happens asynchronously via Queue consumer
         { 'if': [{ '==': [{ 'var': 'action' }, 'delete'] }, 'soft-delete', 'proceed'] },
